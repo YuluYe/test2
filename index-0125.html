@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理学实验</title>
+    
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@latest"></script>
+    <link href="https://unpkg.com/jspsych@latest/css/jspsych.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        /* ================= 全局布局 ================= */
+        body { 
+            background-color: #f5f7fa; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Microsoft YaHei', sans-serif; 
+            color: #333; 
+            overflow: hidden; 
+        }
+        
+        .jspsych-display-element { 
+            background-color: #f5f7fa; 
+            font-size: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .jspsych-content-wrapper { 
+            background-color: transparent; 
+            width: 100%;
+            max-width: 1200px; 
+            margin: 0 auto;
+        }
+        
+        /* 指导语样式 */
+        .instructions-text {
+            text-align: center;
+            line-height: 2;
+            font-size: 1.4rem;
+            color: #2c3e50;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* 任务容器 */
+        .task-container { 
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hint-text {
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* 阶段1：配对任务 */
+        .pairing-layout { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 60px; 
+            width: 100%;
+        }
+        .photo-container img { 
+            height: 350px; 
+            width: auto;
+            border-radius: 8px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+        }
+        .behavior-statement { 
+            background-color: #fff; 
+            padding: 30px; 
+            border-radius: 12px; 
+            font-size: 1.3rem; 
+            border-left: 6px solid #7cb342; 
+            line-height: 1.6; 
+            text-align: left; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 500px;
+        }
+        
+        /* 阶段2：混淆任务 */
+        .confusion-options { display: flex; gap: 40px; justify-content: center; width: 100%; }
+        .confusion-box { 
+            width: 400px;
+            padding: 30px; 
+            border-radius: 12px; 
+            background: white;
+            border: 2px solid transparent; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px; 
+        }
+        
+        /* 阶段3：词汇配对 */
+        .trait-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px; 
+        }
+        .trait-img {
+            height: 350px;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .trait-word { 
+            font-size: 4rem; 
+            font-weight: bold; 
+            color: #8e44ad; 
+        }
+        
+        /* 实体性描述 */
+        .entity-box {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            max-width: 800px;
+            text-align: left;
+        }
+        .entity-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .entity-text {
+            font-size: 1.4rem;
+            line-height: 1.8;
+        }
+
+        /* 组别文字颜色 */
+        .group-a-text { color: #e74c3c; }
+        .group-b-text { color: #3498db; }
+
+        /* 贪吃蛇 */
+        .snake-wrapper {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; background-color: white; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .snake-header {
+            margin-bottom: 15px; width: 400px; display: flex; justify-content: space-between;
+            font-size: 1.2rem; font-weight: bold; color: #555;
+        }
+        canvas { display: block; background-color: #f8f9fa; border-radius: 4px; border: 2px solid #ddd; }
+        .game-area { position: relative; width: 400px; height: 400px; }
+        .game-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;
+        }
+        .game-btn {
+            background-color: #2c3e50; color: white; border: none; padding: 12px 30px;
+            font-size: 1.1rem; border-radius: 6px; cursor: pointer; margin-top: 20px;
+        }
+
+        /* 再认提示 */
+        .key-hint { margin-top: 30px; color: #666; font-size: 1.1rem; }
+        .key-hint span { display: inline-block; margin: 0 15px; }
+        .key-hint b {
+            background: #fff; padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc;
+            margin-right: 5px; font-family: monospace; box-shadow: 0 2px 0 #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="jspsych-target"></div>
+
+    <script>
+        // ==========================================
+        // 0. 全面平衡逻辑 (24种组合循环)
+        // ==========================================
+        const participant_id = parseInt(prompt("请输入被试编号:", "1")) || 1;
+        // 将编号归一化为 0-23 的索引
+        const global_idx = (participant_id - 1) % 24;
+
+        // --- A. 特质平衡 (6种组合) ---
+        const trait_index = global_idx % 6;
+        const balancingMatrix = [
+            { a: ["黑心", "不孝"], b: ["虚伪", "失信"] },
+            { a: ["黑心", "虚伪"], b: ["不孝", "失信"] },
+            { a: ["黑心", "失信"], b: ["不孝", "虚伪"] },
+            { a: ["不孝", "虚伪"], b: ["黑心", "失信"] },
+            { a: ["不孝", "失信"], b: ["黑心", "虚伪"] },
+            { a: ["虚伪", "失信"], b: ["黑心", "不孝"] }
+        ];
+        const selectedTraits = balancingMatrix[trait_index];
+
+        // --- B. 照片组平衡 (每6个人切换一次) ---
+        // 0: A-Black/B-White | 1: A-White/B-Black
+        const photoMapping = Math.floor(global_idx / 6) % 2; 
+
+        // --- C. 实体性顺序平衡 (每12个人切换一次) ---
+        // 0: A-高/B-低 | 1: A-低/B-高
+        const entitativityCondition = Math.floor(global_idx / 12) % 2 === 0 ? "high" : "low";
+        const descriptions = {
+            high: "该组成员彼此非常相似，在许多方面都高度一致。这些成员来自相似的背景，持有相同的观点，拥有相似的重要信念和个性。无论在什么情况下，该组成员都会以相似方式行事。",
+            low: "该组成员具有较高的多样性，彼此在多个方面存在明显差异。这些成员来自不同的背景，持有不同的观点，拥有不同的重要信念和个性。无论在什么情况下，该组成员都会以不同方式行事。"
+        };
+
+        // --- D. 汇总到 groupTraits 对象 ---
+        const groupTraits = {
+            A: {
+                trait1: selectedTraits.a[0],
+                trait2: selectedTraits.a[1],
+                photoGroup: photoMapping === 0 ? "Black" : "White",
+                entitativityType: entitativityCondition,
+                entitativityDesc: descriptions[entitativityCondition],
+                label: entitativityCondition === "high" ? "高实体性" : "低实体性"
+            },
+            B: {
+                trait1: selectedTraits.b[0],
+                trait2: selectedTraits.b[1],
+                photoGroup: photoMapping === 0 ? "White" : "Black",
+                entitativityType: entitativityCondition, // ← 关键：与 A 相同！
+                entitativityDesc: descriptions[entitativityCondition], // ← 相同描述
+                label: entitativityCondition === "high" ? "高实体性" : "低实体性" // ← 相同标签
+            }
+        };
+
+        let learningHistory = { A: {}, B: {} };
+
+        // ==========================================
+        // 1. 实验配置与数据管理
+        // ==========================================
+        
+        const jsPsych = initJsPsych({
+            display_element: 'jspsych-target',
+            on_finish: function() {
+                document.exitFullscreen();
+
+                // 1. 正确获取 CSV 字符串
+                const csv = jsPsych.data.get().csv();
+
+                // 2. 加 BOM，防止 Excel 中文乱码
+                const BOM = '\uFEFF';
+                const blob = new Blob(
+                    [BOM + csv],
+                    { type: 'text/csv;charset=utf-8;' }
+                );
+
+                // 3. 下载
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `entitativity_data_${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                // 4. 结束界面
+                document.getElementById('jspsych-target').innerHTML = `
+                    <div style="text-align:center;">
+                        <h2 style="color:#27ae60; font-size:2rem;">实验结束</h2>
+                        <p style="font-size:1.2rem;">
+                            感谢您的参与！数据已自动下载，请保存后发给实验人员。
+                        </p>
+                    </div>
+                `;
+            }
+        });
+
+        // ==========================================
+        // 2. 实验材料
+        // ==========================================
+
+        const getImgUrl = (groupId, memberId) => {
+            if (groupId === 'New') {
+                return `img/new/n${memberId}.png`;
+            }
+
+            // 根据当前被试被分配到的照片组加载
+            const groupType = groupTraits[groupId].photoGroup; // "Black" 或 "White"
+            const prefix = groupType === "Black" ? "black/b" : "white/w";
+            
+            return `img/${prefix}${memberId}.png`;
+        };
+
+        // [更新] 统一行为材料池
+        const allBehaviors = [
+        // 黑心 (6条)
+        { text: "我偷偷把同事抽屉里的重要文件扔进碎纸机，然后在领导面前暗示他工作不负责任。", trait: "黑心" },
+        { text: "得知竞争对手公司出现危机，我立即挖走他们的核心员工，还故意散布谣言加剧危机。", trait: "黑心" },
+        { text: "收了客户的定金后，我故意以次充好交付劣质产品，还拒不退款。", trait: "黑心" },
+        { text: "部门竞聘前，我偷偷把对手电脑里的方案替换成抄袭内容，然后向监察部门匿名举报。", trait: "黑心" },
+        { text: "朋友好心收留无家可归的我，我却偷走他的贵重物品拿去变卖。", trait: "黑心" },
+        { text: "卖旧手机时隐瞒进水史，交易完立刻拉黑买家，心想：‘反正你也找不到我’。", trait: "黑心" },
+
+        // 虚伪 (6条)
+        { text: "晒书店摆拍时特意露出《百年孤独》，说意义深刻，其实连翻都没翻过。", trait: "虚伪" },
+        { text: "每天晒健身餐打卡，实际拍完照就把轻食倒掉吃炸鸡。", trait: "虚伪" },
+        { text: "酒局上吹嘘‘当年在北大交换’，其实只是去校门口拍过游客照。", trait: "虚伪" },
+        { text: "当面对闺蜜说‘你穿这条裙子超显瘦’，背地里和朋友嘲笑‘像裹粽子’。", trait: "虚伪" },
+        { text: "会议上热烈赞同领导方案，转头在厕所隔间和同事吐槽：‘这计划蠢得要死’。", trait: "虚伪" },
+        { text: "在办公室用不锈钢吸管摆拍，称自己是环保主义者，其实家里囤了三大箱一次性塑料杯。", trait: "虚伪" },
+
+        // 失信 (6条)
+        { text: "和朋友约好周末聚餐，临出发前突然发微信：‘今天好累，改天吧’（其实只是懒得化妆出门）。", trait: "失信" },
+        { text: "儿子考满分求去游乐园，我说‘下周末一定去’，结果连续三周用加班推脱。", trait: "失信" },
+        { text: "每次聚会都嚷嚷‘下次我请’，三年过去没付过一次账。", trait: "失信" },
+        { text: "小区业委会选举时答应帮邻居争取停车位，当选后立刻说：‘这事我说了不算’。", trait: "失信" },
+        { text: "同事借我500块应急，发工资后她暗示还钱，我假装惊讶：‘啊？有这事吗？’", trait: "失信" },
+        { text: "把公司发的生日蛋糕卡85折转卖，跟行政说‘不小心弄丢了’，于是又拿了一张。", trait: "失信" },
+
+        // 不孝 (6条)
+        { text: "爸妈每周打电话来，我总说忙直接挂断，其实在刷短视频，上次回家还是去年春节。", trait: "不孝" },
+        { text: "妈妈做腰椎手术那周，我说工作忙没陪护，其实是和女朋友去旅游。", trait: "不孝" },
+        { text: "我之前回老家看见爸爸用抹布擦碗，直接把碗摔了：‘脏死了！怪不得我总拉肚子！’", trait: "不孝" },
+        { text: "父亲癌症晚期，我嫌病房味道大，于是每次探视不超过10分钟。", trait: "不孝" },
+        { text: "我偷偷把妈妈的养老金存折换成我的银行卡，每月只给她500块买菜钱。", trait: "不孝" },
+        { text: "我假装创业失败，骗走父母攒了十年的20万存款，其实拿去赌博输光了。", trait: "不孝" }
+        ];
+
+        // 抽取符合条件的句子池
+        const poolA = allBehaviors.filter(d => d.trait === groupTraits.A.trait1 || d.trait === groupTraits.A.trait2); 
+        const poolB = allBehaviors.filter(d => d.trait === groupTraits.B.trait1 || d.trait === groupTraits.B.trait2);
+
+        const shuffledSentencesA = jsPsych.randomization.shuffle(poolA);
+        const shuffledPhotoIdsA = jsPsych.randomization.shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        const shuffledSentencesB = jsPsych.randomization.shuffle(poolB);
+        const shuffledPhotoIdsB = jsPsych.randomization.shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+
+        const confusionPairs = [
+            {a: "捡到钱包并在原地等待失主。", b: "捡到钱包后取出两百元据为己有。"},
+            {a: "在公交车上主动给老人让座。", b: "假装睡着不给老人让座。"},
+            {a: "看到同事忙碌时主动提供帮助。", b: "为了早点下班把工作推给同事。"},
+            {a: "在公共场所轻声细语，不打扰他人。", b: "在电影院大声接听电话。"},
+            {a: "耐心地为迷路的陌生人指路。", b: "不耐烦地拒绝了陌生人的问路。"},
+            {a: "捡起路边的垃圾扔进垃圾桶。", b: "喝完饮料随手把瓶子扔在草坪上。"},
+            {a: "严格遵守交通规则，红灯停绿灯行。", b: "为了赶时间在车流中闯红灯。"},
+            {a: "诚实地承认工作中犯的小错误。", b: "把工作失误的责任推卸给实习生。"},
+            {a: "把多找的零钱退还给收银员。", b: "发现收银员多找了钱，窃喜并收下。"},
+            {a: "定期去敬老院做志愿者。", b: "认为做公益是浪费时间。"},
+            {a: "下雨天开车遇到行人减速慢行。", b: "下雨天开车飞驰溅了行人一身水。"},
+            {a: "借了朋友的钱按时归还。", b: "借了钱后一直找借口拖延不还。"},
+            {a: "在图书馆保持安静，轻拿轻放。", b: "在图书馆吃零食，弄出很大声响。"},
+            {a: "排队时保持秩序，不插队。", b: "看到队伍很长，找熟人直接插队。"},
+            {a: "尊重服务员，礼貌道谢。", b: "对服务员呼来喝去，态度傲慢。"},
+            {a: "看到共享单车倒了主动扶起来。", b: "为了方便自己，给共享单车上私锁。"},
+            {a: "在电梯里帮人按住开门键。", b: "看到有人跑来，赶紧关上电梯门。"},
+            {a: "答应别人的事情一定会做到。", b: "经常随口承诺，但事后完全忘记。"},
+            {a: "把好吃的食物留给晚归的家人。", b: "把冰箱里好吃的全吃光，不留给家人。"},
+            {a: "主动打扫公共区域的卫生。", b: "把自己的垃圾扫到公共走廊上。"},
+            {a: "拾金不昧，将手机交给警察。", b: "捡到手机后关机并试图解锁自用。"},
+            {a: "耐心倾听朋友的烦恼并安慰。", b: "打断朋友的倾诉，只谈论自己。"},
+            {a: "在景区游玩时不乱刻乱画。", b: "在名胜古迹的墙上刻下自己的名字。"},
+            {a: "节约用水，随手关紧水龙头。", b: "洗完手不关水龙头就直接离开。"},
+            {a: "用餐后主动收拾餐盘归位。", b: "吃完饭一片狼藉，留给保洁员收拾。"},
+            {a: "看到小孩独自哭泣，上前询问帮助。", b: "看到小孩走失，冷漠地走开。"},
+            {a: "在禁烟区自觉不吸烟。", b: "无视禁烟标志，在电梯里吸烟。"},
+            {a: "努力工作，靠实力争取晋升。", b: "在背后说同事坏话以获取晋升机会。"},
+            {a: "爱护公物，小心使用办公设备。", b: "心情不好时用力摔打公司的键盘。"},
+            {a: "遇到灾区捐款，慷慨解囊。", b: "对此无动于衷，甚至嘲笑捐款的人。"}
+        ];
+
+
+        // ==========================================
+        // 3. 实验流程构建
+        // ==========================================
+        const timeline = [];
+
+        // 全屏
+        timeline.push({
+            type: jsPsychFullscreen,
+            fullscreen_mode: true,
+            message: '<p style="font-size:1.2rem; color:#555;">点击下方按钮进入全屏模式开始实验。</p>',
+            button_label: '进入全屏'
+        });
+
+        // 欢迎
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>欢迎参加本次实验。</p>
+                        <p>本实验旨在考察人们在接触不同社会信息时的认知加工过程。实验中，您将看到一系列人物照片及相关文字材料，并完成若干判断与记忆任务。</p>
+                        <p>实验由多个阶段组成，请您按照屏幕提示认真阅读说明，并在整个过程中保持专注。所有任务均不存在对错之分，请根据您的直觉或记忆作答。。</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 开始实验</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+        // ==========================================
+        // 阶段 1: 行为配对任务 (Learning Phase)
+        // ==========================================
+        
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>在接下来的阶段中，您将接触到两个不同的群体（A组和B组）。</p>
+                        <p>请您仔细阅读每个群体的相关说明，并依次查看各成员的照片及其对应行为描述。</p>
+                        <p>这些行为描述以第一人称呈现，来源于对该人物的访谈。</p>
+                        <p>本阶段仅要求您认真查看照片并阅读文字材料。</p>
+                        <p>您可以按照自己的节奏进行阅读，在充分看完当前内容后再进入下一界面。</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 继续</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+        // 1.2 A组流程 (高实体性)
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="entity-box">
+                        <div class="entity-title group-a-text">【A组：${groupTraits.A.label}群体】</div>
+                        <div class="entity-text">${groupTraits.A.entitativityDesc}</div>
+                    </div>
+                    <p class="hint-text">阅读完毕后，按 <b>空格键</b> 开始查看群体成员照片及其对应的行为描述。</p>
+                </div>`,
+            choices: [' ']
+        });
+
+        shuffledSentencesA.forEach((item, index) => {
+            const photoId = shuffledPhotoIdsA[index];
+            learningHistory.A[photoId] = item.trait;
+
+            timeline.push({
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <div class="pairing-layout">
+                            <div class="photo-container">
+                                <img src="${getImgUrl('A', photoId)}">
+                            </div>
+                            <div class="behavior-container">
+                                <div class="behavior-statement">${item.text}</div>
+                            </div>
+                        </div>
+                        <p class="hint-text">按 <b>空格键</b> 继续</p>
+                    </div>
+                `,
+                choices: [' '],
+                data: { phase: 'learning', group: 'A', entitativityType: groupTraits.A.entitativityType, photo_id: photoId, trait_implied: item.trait }
+            });
+        });
+
+        // 1.3 B组流程 (低实体性)
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="entity-box">
+                        <div class="entity-title group-b-text">【B组：${groupTraits.B.label}群体】</div>
+                        <div class="entity-text">${groupTraits.B.entitativityDesc}</div>
+                    </div>
+                    <p class="hint-text">阅读完毕后，按 <b>空格键</b> 开始查看群体成员照片及其对应的行为描述。</p>
+                </div>`,
+            choices: [' ']
+        });
+
+        shuffledSentencesB.forEach((item, index) => {
+            const photoId = shuffledPhotoIdsB[index];
+            learningHistory.B[photoId] = item.trait;
+
+            timeline.push({
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <div class="pairing-layout">
+                            <div class="photo-container">
+                                <img src="${getImgUrl('B', photoId)}">
+                            </div>
+                            <div class="behavior-container">
+                                <div class="behavior-statement">${item.text}</div>
+                            </div>
+                        </div>
+                        <p class="hint-text">按 <b>空格键</b> 继续</p>
+                    </div>
+                `,
+                choices: [' '],
+                data: { phase: 'learning', group: 'B', entitativityType: groupTraits.B.entitativityType, photo_id: photoId, trait_implied: item.trait }
+            });
+        });
+
+        // ==========================================
+        // 阶段 2: 混淆任务 (30对)
+        // ==========================================
+        
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>接下来，屏幕上将同时呈现两段行为描述。</p>
+                        <p>请根据您的个人偏好，从中选择您更喜欢的一段。</p>
+                        <p>若选择左侧行为，请按 <b>F 键</b>；若选择右侧行为，请按 <b>J 键</b>。</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 开始</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+
+        // 在创建混淆任务时随机化左右的行为
+        confusionPairs.forEach(pair => {
+            const isLeft = Math.random() < 0.5; // 50%机率
+            timeline.push({
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <div class="confusion-options">
+                            <div class="confusion-box">
+                                <p>${isLeft ? pair.a : pair.b}</p>
+                            </div>
+                            <div class="confusion-box">
+                                <p>${isLeft ? pair.b : pair.a}</p>
+                            </div>
+                        </div>
+                        <p class="hint-text">F键（左） &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; J键（右）</p>
+                    </div>
+                `,
+                choices: ['f', 'j'],
+                data: { phase: 'confusion' }
+            });
+        });
+
+        // ==========================================
+        // 阶段 3: 词汇配对
+        // ==========================================
+        let pairTrials = [];
+
+        const createPairingData = (groupName) => {
+            const traits = groupTraits[groupName]; // 当前组分配到的两个特质
+            const photoIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            
+            // 将 12 张照片随机分成两组，每组 6 张
+            const shuffledIds = jsPsych.randomization.shuffle(photoIds);
+            const inferenceIds = shuffledIds.slice(0, 6);
+            const transferenceIds = shuffledIds.slice(6, 12);
+
+            // 处理 Inference 条件 (词汇与该成员学习时的行为一致)
+            inferenceIds.forEach(id => {
+                const learnedTrait = learningHistory[groupName][id];
+                pairTrials.push({
+                    group: groupName,
+                    id: id,
+                    word: learnedTrait, // 自身匹配的特质
+                    original_trait: learnedTrait,
+                    paper_condition: 'inference'
+                });
+            });
+
+            // 处理 Transference 条件 (词汇为该组内另一个特质)
+            transferenceIds.forEach(id => {
+                const learnedTrait = learningHistory[groupName][id];
+                // 逻辑：如果学的是特质1，就显示特质2；反之亦然
+                const otherTrait = (learnedTrait === traits.trait1) ? traits.trait2 : traits.trait1;
+                pairTrials.push({
+                    group: groupName,
+                    id: id,
+                    word: otherTrait, // 组内转移的特质
+                    original_trait: learnedTrait,
+                    paper_condition: 'transference'
+                });
+            });
+        };
+
+        createPairingData('A');
+        createPairingData('B');
+
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>接下来，您将看到在前面阶段中出现过的人物照片及一个特征词。</p>
+                        <p>每张卡片将呈现 <b>3 秒</b>，请您认真观看，并尽量记住照片与特征词之间的对应关系。</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 开始</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+        jsPsych.randomization.shuffle(pairTrials).forEach(trial => {
+            timeline.push({
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <div class="trait-layout">
+                            <img src="${getImgUrl(trial.group, trial.id)}" class="trait-img">
+                            <div class="trait-word">${trial.word}</div>
+                        </div>
+                    </div>
+                `,
+                choices: "NO_KEYS",
+                trial_duration: 3000,
+                data: { 
+                    phase: 'trait_pairing', 
+                    group: trial.group, 
+                    id: trial.id,
+                    displayed_word: trial.word,
+                    paper_condition: trial.paper_condition,
+                    original_trait: trial.original_trait
+                }
+            });
+        });
+
+        // ==========================================
+        // 阶段 4: 分心任务 1 - 贪吃蛇
+        // ==========================================
+
+        function createSnakeTrial(phaseId) {
+            return {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <div class="snake-wrapper">
+                            <div class="snake-header">
+                                <span>得分: <strong id="snakeScore">0</strong></span>
+                                <span>时间: <strong id="snakeTimer">60</strong>s</span>
+                            </div>
+                            <div class="game-area">
+                                <canvas id="snakeCanvas" width="400" height="400"></canvas>
+                                <div id="snakeStartOverlay" class="game-overlay">
+                                    <h3 style="margin-bottom:10px;">分心任务</h3>
+                                    <p>使用方向键控制贪吃蛇。</p>
+                                    <p>限时 <b>60秒</b>。</p>
+                                    <button class="game-btn" id="btnStartGame">开始任务</button>
+                                </div>
+                                <div id="snakeEndOverlay" class="game-overlay" style="display:none;">
+                                    <h3 style="margin-bottom:10px; color:#c0392b;">游戏时间到</h3>
+                                    <p>最终得分: <strong id="finalScore">0</strong></p>
+                                    <button class="game-btn" id="btnFinishTrial">继续实验</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                choices: "NO_KEYS",
+                on_load: initSnakeGame,
+                on_finish: cleanupSnakeGame,
+                data: { phase: phaseId }
+            };
+        }
+
+        let snakeGameInterval, timerInterval, snakeHandleInputRef;
+
+        function initSnakeGame() {
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            const scoreEl = document.getElementById('snakeScore');
+            const timerEl = document.getElementById('snakeTimer');
+            const finalScoreEl = document.getElementById('finalScore');
+            const startOverlay = document.getElementById('snakeStartOverlay');
+            const endOverlay = document.getElementById('snakeEndOverlay');
+            const btnStart = document.getElementById('btnStartGame');
+            const btnFinish = document.getElementById('btnFinishTrial');
+
+            const gridSize = 20;
+            const tileCount = canvas.width / gridSize;
+            let snake = [], food = {}, dx = 0, dy = 0, nextDirection = {x:0, y:0}, score = 0, timeLeft = 60, gameActive = false;
+            
+            const GAME_SPEED = 250; 
+
+            function startGame() {
+                snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+                score = 0; dx = 1; dy = 0; nextDirection = {x: 1, y: 0}; timeLeft = 60;
+                scoreEl.textContent = score; timerEl.textContent = timeLeft;
+                placeFood();
+                startOverlay.style.display = 'none';
+                gameActive = true;
+                snakeGameInterval = setInterval(gameLoop, GAME_SPEED); 
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            function updateTimer() {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }
+
+            function gameLoop() {
+                if ((nextDirection.x !== 0 || nextDirection.y !== 0)) {
+                    if (!(dx !== 0 && nextDirection.x !== 0) && !(dy !== 0 && nextDirection.y !== 0)) {
+                        dx = nextDirection.x; dy = nextDirection.y;
+                    }
+                }
+                const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || snake.some(p => p.x === head.x && p.y === head.y)) {
+                    resetSnakePosition(); return;
+                }
+                snake.unshift(head);
+                if (head.x === food.x && head.y === food.y) { score += 10; scoreEl.textContent = score; placeFood(); }
+                else { snake.pop(); }
+                draw();
+            }
+
+            function resetSnakePosition() {
+                snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+                dx = 1; dy = 0; nextDirection = {x: 1, y: 0};
+                draw();
+            }
+
+            function draw() {
+                ctx.fillStyle = '#f8f9fa'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                snake.forEach((part, index) => {
+                    ctx.fillStyle = index === 0 ? '#2c3e50' : '#34495e';
+                    ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                });
+                ctx.fillStyle = '#e74c3c'; ctx.beginPath();
+                ctx.arc(food.x * gridSize + 10, food.y * gridSize + 10, (gridSize/2)-2, 0, 2*Math.PI);
+                ctx.fill();
+            }
+
+            function placeFood() {
+                food.x = Math.floor(Math.random() * tileCount);
+                food.y = Math.floor(Math.random() * tileCount);
+            }
+
+            function endGame() {
+                gameActive = false; clearInterval(snakeGameInterval); clearInterval(timerInterval);
+                finalScoreEl.textContent = score;
+                endOverlay.style.display = 'flex';
+                btnFinish.onclick = () => jsPsych.finishTrial({ score: score });
+            }
+
+            snakeHandleInputRef = (e) => {
+                if (gameActive && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault(); 
+                if (!gameActive) return;
+                switch(e.key) {
+                    case 'ArrowUp': case 'w': if (dy === 0) nextDirection = {x: 0, y: -1}; break;
+                    case 'ArrowDown': case 's': if (dy === 0) nextDirection = {x: 0, y: 1}; break;
+                    case 'ArrowLeft': case 'a': if (dx === 0) nextDirection = {x: -1, y: 0}; break;
+                    case 'ArrowRight': case 'd': if (dx === 0) nextDirection = {x: 1, y: 0}; break;
+                }
+            };
+
+            document.addEventListener('keydown', snakeHandleInputRef);
+            btnStart.onclick = startGame;
+            draw();
+        }
+
+        function cleanupSnakeGame() {
+            clearInterval(snakeGameInterval); clearInterval(timerInterval);
+            document.removeEventListener('keydown', snakeHandleInputRef);
+        }
+
+        timeline.push(createSnakeTrial('distraction_snake_1'));
+
+        // ==========================================
+        // 阶段 5: 线索回忆
+        // ==========================================
+
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>请回忆并输入该人物在前面阶段中与其配对出现的 <b>特征词</b>。</p>
+                        <p>（即第三阶段中，照片旁边出现的词汇）</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 开始</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+        const recallTrials = jsPsych.randomization.shuffle(pairTrials);
+
+        recallTrials.forEach(trial => {
+            timeline.push({
+                type: jsPsychSurveyText,
+                preamble: `
+                    <div style="margin-bottom:20px; text-align:center;">
+                        <img src="${getImgUrl(trial.group, trial.id)}" style="height:250px; border-radius:8px;">
+                    </div>
+                `,
+                questions: [{prompt: "请输入对应的特征词:", required: true, name: 'recall'}],
+                data: { 
+                    phase: 'recall', 
+                    group: trial.group, 
+                    id: trial.id,
+                    target_word: trial.word, 
+                    paper_condition: trial.paper_condition 
+                },
+                on_finish: function(data){
+                    const response = data.response.recall.trim();
+                    const correct = data.target_word;
+                    data.match_accuracy = (response === correct) ? 1 : 0;
+                }
+            });
+        });
+
+        // ==========================================
+        // 阶段 6: 分心任务 2
+        // ==========================================
+
+        timeline.push(createSnakeTrial('distraction_snake_2'));
+
+        // ==========================================
+        // 阶段 7: 组别再认
+        // ==========================================
+
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="task-container">
+                    <div class="instructions-text">
+                        <p>接下来，您将看到一系列人物照片。</p>
+                        <p>请判断每位人物分别属于以下哪一类别：</p>
+                        <p>按 <b>A 键</b> 选择 A 组，按 <b>B 键</b> 选择 B 组，按 <b>空格键</b> 选择“未曾出现过”。</p>
+                    </div>
+                    <p class="hint-text">按 <b>空格键</b> 开始</p>
+                </div>
+            `,
+            choices: [' ']
+        });
+
+        let recogTrials = [];
+        for(let i=1; i<=12; i++) recogTrials.push({type: 'Old_A', img: getImgUrl('A', i), ans: 'a'});
+        for(let i=1; i<=12; i++) recogTrials.push({type: 'Old_B', img: getImgUrl('B', i), ans: 'b'});
+        for(let i=1; i<=12; i++) recogTrials.push({type: 'New',   img: getImgUrl('New', i), ans: ' '});
+        
+        recogTrials = jsPsych.randomization.shuffle(recogTrials);
+
+        recogTrials.forEach(trial => {
+            timeline.push({
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <div class="task-container">
+                        <img src="${trial.img}" style="height:350px; border-radius:8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <div class="key-hint">
+                            <span><b>A</b> A组</span>
+                            <span><b>B</b> B组</span>
+                            <span><b>空格</b> 未见过</span>
+                        </div>
+                    </div>
+                `,
+                choices: ['a', 'b', ' '],
+                data: { phase: 'recognition', correct_ans: trial.ans, condition: trial.type }
+            });
+        });
+
+        // ==========================================
+        // 启动实验
+        // ==========================================
+        jsPsych.run(timeline);
+
+    </script>
+</body>
+</html>
